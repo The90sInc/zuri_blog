@@ -1,9 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Post
-from .forms import SignUpForm,  CommentForm, Comment
+from .models import Post, PostComment
+from .forms import SignUpForm
 
 
 # Create your views here.
@@ -20,22 +20,11 @@ class BlogDetailView(DetailView):
     model = Post
     template_name = "post_detail.html"
 
-
-def post_detailview(request, id):
-    if request.method == 'POST':
-        cf = CommentForm(request.POST or None)
-        if cf.is_valid():
-            content = request.POST.get('content')
-            comment = Comment.objects.create(post=Post, user=request.user, content=content)
-            comment.save()
-            return reverse_lazy(Post.get_absolute_url())
-        else:
-            cf = CommentForm()
-
-        context = {
-            'comment_form': cf,
-        }
-        return render(request, 'socio / post_detail.html', context)
+    def get_context_data(self, **kwargs):
+        context = super(BlogDetailView, self).get_context_data(**kwargs)
+        post = Post.objects.all()
+        #context['sidebar_articles'] = Post.order_by('-created')[:15]
+        return context
 
 
 class BlogCreateView(CreateView):
@@ -53,4 +42,19 @@ class BlogDeleteView(DeleteView):
     template_name = "post_delete.html"
     success_url = reverse_lazy("home")
 
+class CreatePostComment(CreateView):
+    model = PostComment
+    fields = ('text',)
 
+    def post_valid(self, form):
+        post = get_object_or_404(Post,
+                                    slug=Post.slug) # Replaced 'Post' with 'Article'
+        article = post.objects.all()
+        articlecomment = form.save(commit=False)
+        articlecomment.author = self.request.user
+        articlecomment.article = Post
+        articlecomment.save()
+        return redirect('post_detail', slug=article.slug)
+
+    def get_success_url(self):
+        return reverse_lazy('home')
