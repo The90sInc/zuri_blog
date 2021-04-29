@@ -1,12 +1,13 @@
 from django.urls import path
-from .views import SignUpView
-from .views import blogListView, BlogDetailView, BlogCreateView, BlogUpdateView, BlogDeleteView
+from .views import blogListView, BlogDetailView, BlogCreateView, BlogUpdateView, BlogDeleteView, SignUpView
+from django.views.generic.base import TemplateView # new
 
 urlpatterns = [
-    path('', SignUpView.as_view(), name='signup'),
+    path("accounts/signup/", SignUpView.as_view(), name = "signup"),
     path("post/<int:pk>/delete/", BlogDeleteView.as_view(), name= "post_delete"),
     path("post/<int:pk>/edit/", BlogUpdateView.as_view(), name= "post_edit"),
     path('post/new/',BlogCreateView.as_view(), name='post_new'),
     path('post/<int:pk>/', BlogDetailView.as_view(), name= 'post_detail'),
-    path("home/", blogListView.as_view(), name="home"),
+    path("", blogListView.as_view(), name="home"),
+    #path('', TemplateView.as_view(template_name='home.html'), name='home'),
 ]
